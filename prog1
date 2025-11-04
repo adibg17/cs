@@ -1,0 +1,112 @@
+ Procedure
+ 1. Configure VirtualBox Network for Packet Capture
+ o Open VirtualBox → Kali VM → Settings → Network.
+ o Set Adapter 1:
+  Attached to: Bridged Adapter
+  Promiscuous Mode: Allow All
+  Cable Connected: ✔️
+ o Save settings.
+ 2. Start Kali Linux VM
+ o Boot the Kali Linux VM in VirtualBox.
+ 3. Run Wireshark as Root
+ sudo wireshark
+ o Select network interface eth0 
+4. Start Packet Capture
+ o Click on eth0 to begin capturing packets.
+ o Generate some traffic (open websites, ping servers, or run curl commands).
+5. Apply Display Filters for Analysis
+ Examples:
+ o DNS Packets:
+ dns
+ o HTTPS Packets:
+ tls
+ o Packets from specific IP:
+ ip.addr == 18.161.216.37
+ o TCP Port 443:
+ tcp.port == 443
+6. Analyze Captured Packets
+ o Select any packet and expand:
+  Ethernet Layer: Source & Destination MAC addresses
+  IP Layer: Source & Destination IP addresses
+  TCP/UDP Layer: Port numbers, flags (SYN, ACK)
+  Application Layer: Protocol details (DNS query, HTTP request, TLS 
+handshake)
+7. Stop Capture and Save
+ o Stop capture (red square button).
+ o Save capture file in .pcap format for submission.
+Part B: Capturing Login Credentials over HTTP
+ Step 1 – Setup Apache Web Server
+ sudo service apache2 start
+ sudo mkdir -p /var/www/html/testlogin
+ cd /var/www/html/testlogin
+ Step 2 – Create Login HTML Page
+ sudo nano login.html
+ html
+ CopyEdit
+ <!DOCTYPE html>
+ <html>
+ <head>
+    <title>Test Login Page</title>
+ </head>
+ <body>
+    <h2>Login Form</h2>
+    <form action="login.php" method="post">
+        Username: <input type="text" name="username"><br><br>
+        Password: <input type="password" name="password"><br><br>
+        <input type="submit" value="Login">
+    </form>
+ </body>
+ </html>
+ Save (Ctrl + O → Enter → Ctrl + X).
+ Step 3 – Create PHP Script
+ sudo nano login.php
+ php
+ CopyEdit
+ <?php
+ $username = $_POST['username'];
+ $password = $_POST['password'];
+ echo "<h2>Login Attempt</h2>";
+ echo "Username: " . $username . "<br>";
+ echo "Password: " . $password . "<br>";
+ ?>
+ Step 4 – Start/Enable Apache
+ sudo service apache2 status
+ sudo service apache2 start
+ Step 5 – Test Page
+ Browser:
+ http://127.0.0.1/testlogin/login.html
+Or: Type in bash
+ curl http://127.0.0.1/testlogin/login.html
+ Step 6 – Capture with Wireshark
+  Open Wireshark → select lo (loopback) interface.
+  Start capture.
+  Apply filter:
+ http.request.method == "POST"
+Step 7 – Perform Login Attempt
+  Username: admin
+  Password: test123
+  Submit form.
+ Step 8 – Analyze Packets
+  Locate POST packet.
+  Right-click → Follow → TCP Stream.
+  Credentials will be visible in plain text.
+Observations
+  Network traffic from various applications can be captured in real-time.
+  Protocol filters help narrow down the traffic of interest.
+  Details such as source/destination IP, MAC addresses, ports, and application data can 
+be examined.
+  HTTP POST requests transmit data in plaintext.
+  Credentials can be directly read in the captured packets when using HTTP.
+  Using HTTPS would encrypt this data and prevent such interception.
+ Post-Lab Discussion
+  Bridged Adapter mode allows the VM to be part of the physical network, enabling 
+packet sniffing.
+  Promiscuous mode is essential to capture packets not directly addressed to the 
+capturing machine.
+ HTTPS traffic is encrypted, so packet payloads are unreadable without decryption 
+keys.
+  HTTP lacks encryption, making it vulnerable to credential theft.
+  Tools like Wireshark can be used by attackers to sniff sensitive data if encryption is 
+not in place.
+  Transitioning to HTTPS mitigates this risk by encrypting data in transit.
+  The loopback interface captures traffic within the local system (127.0.0.1)
